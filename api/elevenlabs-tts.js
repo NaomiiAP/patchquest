@@ -1,0 +1,1 @@
+module.exports = async (req, res) => { res.status(200).json({ success: true, fake: 'elevenlabs placeholder' }); };
