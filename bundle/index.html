@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="PatchQuest — paste a GitHub issue, discover skill gaps, learn, and generate a solution outline with PR checklist." />
+  <title>PatchQuest | Master GitHub Open Source</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <link rel="icon" href="favicon.png" type="image/png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css?v=10" />
+</head>
+<body>
+  <!-- Glowing Background Mesh Blobs -->
+  <div class="mesh-blob mesh-blob-1" aria-hidden="true"></div>
+  <div class="mesh-blob mesh-blob-2" aria-hidden="true"></div>
+  <div class="mesh-blob mesh-blob-3" aria-hidden="true"></div>
+
+  <div id="floating-petals"></div>
+  <button class="patch-pet" id="patch-pet" type="button" aria-label="Say hello to Patch, your quest companion" aria-pressed="false">
+    <span class="patch-pet-bubble" role="status">Patch is rooting for you.</span>
+    <span class="blackdragon-sprite" aria-hidden="true"></span>
+  </button>
+  <!-- Floating Pill Header -->
+  <div class="fixed top-5 left-0 right-0 z-[100] flex justify-center px-4 pointer-events-none" id="landing-nav">
+    <header class="pointer-events-auto flex w-full max-w-5xl items-center justify-between gap-4 rounded-full border border-black/5 bg-white/80 px-6 py-3 shadow-sm backdrop-blur-xl transition-all duration-300 hover:shadow-md hover:bg-white/95" style="display: flex; align-items: center; justify-content: space-between; padding: 10px 24px;">
+      <a href="#" class="flex items-center gap-3 pl-1" style="display: flex; align-items: center; gap: 12px; text-decoration: none;">
+        <span class="logo">
+          PQ
+        </span>
+        <span class="lp-brand-name">
+          <span class="block font-display text-lg leading-none tracking-tight" style="font-weight: 800; font-family: var(--font-heading); color: var(--text);">PatchQuest</span>
+        </span>
+      </a>
+      <div class="lp-nav items-center gap-1 bg-black/5 p-1 rounded-full border border-black/5" style="display: flex; align-items: center; gap: 4px;">
+        <a href="#features" class="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold text-[#666] transition-all hover:bg-white hover:text-black">Features</a>
+        <a href="#workflow" class="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold text-[#666] transition-all hover:bg-white hover:text-black">Methodology</a>
+        <a href="#start" class="inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold text-[#666] transition-all hover:bg-white hover:text-black">Get started</a>
+      </div>
+      <div class="flex items-center gap-2 pr-1">
+        <a href="https://github.com/NaomiiAP/patchquest" target="_blank" rel="noopener" class="inline-flex min-h-9 shrink-0 items-center gap-1.5 whitespace-nowrap rounded-full bg-black px-4 py-1.5 text-xs font-bold text-white shadow-sm transition hover:bg-black/80 hover:scale-105 active:scale-95">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-400"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+          <span>Star on GitHub</span>
+        </a>
+      </div>
+    </header>
+  </div>
+
+  <div class="landing-page" id="landing-page" style="max-width: 1200px; margin: 0 auto; padding: 100px 24px 80px; position: relative; z-index: 3;">
+    <!-- Hackathon Banner -->
+    <div style="background: linear-gradient(135deg, rgba(255, 69, 58, 0.08) 0%, rgba(115, 66, 226, 0.08) 100%); border: 1px solid rgba(255, 69, 58, 0.15); border-radius: 24px; padding: 18px 24px; margin-bottom: 40px; display: flex; flex-direction: column; gap: 8px; text-align: left; position: relative; overflow: hidden; box-shadow: var(--shadow-sm);">
+      <div style="position: absolute; right: -15px; top: -15px; font-size: 4.5rem; opacity: 0.08; pointer-events: none; user-select: none;">🔥</div>
+      <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.15em; color: #FF453A;">
+        <span style="display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #FF453A; box-shadow: 0 0 8px #FF453A;"></span>
+        DEV Weekend Challenge Entry: Passion Edition
+      </div>
+      <h3 style="font-family: var(--font-heading); font-size: 1.2rem; font-weight: 800; color: var(--text); margin: 0;">Built for Developers Obsessed with Craft & Growth</h3>
+      <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin: 0; max-width: 900px;">
+        PatchQuest fuels the late-night obsession of open-source builders. Utilizing <strong>Google AI (Gemini Live API)</strong> for real-time pair programming voice audits and <strong>ElevenLabs API</strong> for speech synthesis, this tool bridges the gap between raw curiosity and production readiness.
+      </p>
+    </div>
+
+    <!-- Hero -->
+    <section class="lp-hero relative z-10 w-full pt-8 pb-16 overflow-hidden">
+      <div class="grid gap-12 lg:grid-cols-[1.1fr_1fr] items-center text-left">
+        <!-- Left: Headline + description -->
+        <div class="space-y-8 pt-4">
+          <span class="inline-flex items-center gap-2 rounded-full bg-white/60 backdrop-blur-md px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-[var(--accent)] border border-[var(--accent)]/10 shadow-sm w-fit" style="color: var(--accent);">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-blue-500"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+            Google AI + ElevenLabs Powered
+          </span>
+          <h1 class="font-display text-5xl sm:text-6xl lg:text-[4.5rem] font-black tracking-tighter leading-[0.95] mb-6" style="font-family: var(--font-heading); font-weight: 900; line-height: 0.95;">
+            <span style="background: linear-gradient(135deg, #7342E2 0%, #FF453A 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block; filter: drop-shadow(0 2px 8px rgba(115, 66, 226, 0.1));">Level Up</span><br />
+            <span style="color: var(--text);">From Every Bug.</span>
+          </h1>
+          <p class="max-w-[500px] text-lg font-medium leading-relaxed text-[var(--text-muted)] mb-10" style="color: var(--text-muted);">
+            Turn GitHub issues into personalized learning quests. Driven by the <strong>passion to build</strong>, PatchQuest identifies prerequisite skills, tutors you via real-time Gemini Live voice chats, and validates your code before you submit.
+          </p>
+          <button type="button" class="lp-cta shadow-[0_4px_14px_rgba(0,0,0,0.15)]" id="btn-launch-app">Start Your First Quest</button>
+        </div>
+
+        <!-- Right: Gorgeous Hero Dashboard Mockup (Dark Mode) -->
+        <div class="w-full relative z-10" style="perspective: 2000px;">
+          <!-- The Main IDE Window (Dark Mode) -->
+          <div class="relative bg-[#0d0d12]/90 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-[0_40px_100px_-20px_rgba(0,0,0,0.5),0_0_0_1px_rgba(255,255,255,0.05)_inset] overflow-hidden transition-all duration-700 ease-[cubic-bezier(0.175,0.885,0.32,1.275)] group suraksha-parallax" style="transform-style: preserve-3d;">
+          
+          <!-- Window Header (Mac OS style) -->
+          <div class="h-12 bg-white/5 border-b border-white/10 flex items-center px-4" style="transform: translateZ(10px);">
+            <div class="flex gap-2">
+              <div class="w-3 h-3 rounded-full bg-[#ff5f56] shadow-[inset_0_0_4px_rgba(255,255,255,0.2)]"></div>
+              <div class="w-3 h-3 rounded-full bg-[#ffbd2e] shadow-[inset_0_0_4px_rgba(255,255,255,0.2)]"></div>
+              <div class="w-3 h-3 rounded-full bg-[#27c93f] shadow-[inset_0_0_4px_rgba(255,255,255,0.2)]"></div>
+            </div>
+            <div class="mx-auto flex items-center justify-center bg-black/40 border border-white/5 rounded-md px-4 py-1.5 text-[11px] font-mono text-gray-400 w-72 shadow-inner">
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 text-gray-500"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="3" x2="21" y1="9" y2="9"/><line x1="9" x2="9" y1="21" y2="9"/></svg>
+              patchquest-engine / parser.ts
+            </div>
+          </div>
+          
+          <!-- UI Layout -->
+          <div class="flex h-[400px]" style="transform: translateZ(20px);">
+            <!-- Sidebar -->
+            <div class="w-64 border-r border-white/10 bg-black/20 p-5 flex flex-col gap-5 hidden sm:flex">
+              <div>
+                <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Active Quest</span>
+                <div class="mt-3 flex items-center gap-3">
+                  <div class="w-8 h-8 rounded-lg bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m18 16 4-4-4-4"/><path d="m6 8-4 4 4 4"/><path d="m14.5 4-5 16"/></svg>
+                  </div>
+                  <div class="flex-1">
+                    <div class="text-sm font-semibold text-gray-200">AST Parsing</div>
+                    <div class="text-[10px] text-gray-500">Issue #142</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="space-y-4 mt-2">
+                <div class="flex items-center gap-3">
+                  <div class="w-6 h-6 rounded-full bg-green-500/20 flex items-center justify-center text-green-400"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div>
+                  <div class="h-2 w-24 bg-white/10 rounded-full"></div>
+                </div>
+                <div class="flex items-center gap-3">
+                  <div class="w-6 h-6 rounded-full bg-[#111111] flex items-center justify-center text-white relative shadow-[0_0_15px_rgba(17,17,17,0.6)]">
+                    <span class="absolute inset-0 rounded-full bg-[#111111] animate-ping opacity-40"></span>
+                    <span class="text-[10px] font-bold">2</span>
+                  </div>
+                  <div class="flex-1">
+                    <div class="h-2.5 w-28 bg-gray-200 rounded-full mb-1.5 shadow-[0_0_10px_rgba(255,255,255,0.2)]"></div>
+                    <div class="h-1.5 w-20 bg-white/20 rounded-full"></div>
+                  </div>
+                </div>
+                <div class="w-[2px] h-6 bg-white/10 ml-[11px]"></div>
+                <div class="flex items-center gap-3 opacity-50">
+                  <div class="w-6 h-6 rounded-full bg-white/5 border border-white/10 flex items-center justify-center text-gray-500 text-[10px] font-bold">3</div>
+                  <div class="h-2 w-20 bg-white/10 rounded-full"></div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Code Editor Area -->
+            <div class="flex-1 bg-[#09090b] relative overflow-hidden font-mono text-[13px] leading-relaxed p-6 flex flex-col justify-center">
+              
+              <!-- Subtle grid background -->
+              <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiLz48L3N2Zz4=')]"></div>
+
+              <div class="relative z-10 pl-4 text-gray-300">
+                <div class="text-[#c678dd] mb-2"><span class="text-[#56b6c2]">import</span> { parse } <span class="text-[#56b6c2]">from</span> <span class="text-[#98c379]">'@babel/parser'</span>;</div>
+                <br>
+                <div class="text-[#c678dd]"><span class="text-[#56b6c2]">export async function</span> <span class="text-[#61afef]">analyzeCode</span>(source: <span class="text-[#e5c07b]">string</span>) {</div>
+                <div class="pl-6 mt-1 text-[#5c6370] italic">// Generate AST to detect required skills</div>
+                <div class="pl-6 text-[#c678dd]"><span class="text-[#56b6c2]">const</span> ast = <span class="text-[#61afef]">parse</span>(source, {</div>
+                <div class="pl-12 text-[#d19a66]">sourceType: <span class="text-[#98c379]">'module'</span>,</div>
+                <div class="pl-12 text-[#d19a66]">plugins: [<span class="text-[#98c379]">'typescript'</span>, <span class="text-[#98c379]">'jsx'</span>]</div>
+                <div class="pl-6">});</div>
+                <br>
+                
+                <!-- Interactive AI Annotation -->
+                <div class="pl-6 relative group inline-block w-full">
+                  <div class="absolute inset-y-0 -left-4 w-1 bg-gradient-to-b from-[#111111] to-blue-500 rounded-r shadow-[0_0_10px_rgba(17,17,17,0.6)]"></div>
+                  <div class="py-1.5 px-2 rounded flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-colors">
+                    <span class="text-[#c678dd]"><span class="text-[#56b6c2]">return</span> <span class="text-[#61afef]">extractSkillsFromAST</span>(ast);</span>
+                    
+                    <span class="ml-auto flex items-center gap-2 bg-[#111111] text-white text-[10px] font-bold px-2 py-1 rounded-full animate-pulse-fast shadow-[0_0_15px_rgba(17,17,17,0.4)]">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+                      AI Suggestion
+                    </span>
+                  </div>
+                  
+                  <!-- AI Mentor Popover (appears on hover) -->
+                  <div class="absolute -top-24 left-10 bg-[#1e1e24] border border-white/10 text-gray-200 px-4 py-3 rounded-xl shadow-[0_20px_40px_rgba(0,0,0,0.6)] text-[12px] font-sans font-medium w-72 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-4 group-hover:translate-y-0 pointer-events-none z-50">
+                    <div class="flex items-center gap-2 mb-1.5 text-indigo-400 font-bold">
+                      <div class="w-2 h-2 rounded-full bg-indigo-400 animate-ping"></div>
+                      Code Mentor
+                    </div>
+                    Don't forget to handle parse errors! Wrap this in a try-catch block to prevent the analyzer from crashing on invalid syntax.
+                    <div class="absolute -bottom-2 left-10 w-4 h-4 bg-[#1e1e24] border-b border-r border-white/10 rotate-45"></div>
+                  </div>
+                </div>
+                
+                <div class="mt-2">}</div>
+              </div>
+              
+              <!-- Live Video/Screenshare Widget (Gemini Live Style) -->
+              <div class="absolute bottom-6 right-6 flex items-center gap-3 bg-[#1e1e24]/80 backdrop-blur-xl border border-white/10 p-2 pr-4 rounded-full shadow-[0_10px_30px_rgba(0,0,0,0.5)] z-20 hover:scale-105 transition-transform cursor-pointer group">
+                <div class="relative w-10 h-10 flex items-center justify-center rounded-full bg-gradient-to-tr from-[#111111] to-blue-500 shadow-[0_0_15px_rgba(17,17,17,0.5)]">
+                  <!-- Pulsing rings -->
+                  <div class="absolute inset-0 rounded-full bg-white/20 animate-ping opacity-75" style="animation-duration: 2s;"></div>
+                  <div class="absolute inset-0 rounded-full bg-[#111111] animate-pulse"></div>
+                  <!-- AI Voice Icon -->
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-white relative z-10"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg>
+                </div>
+                <div class="flex flex-col">
+                  <span class="text-[10px] font-bold text-gray-400 uppercase tracking-wider leading-tight">Live AI Session</span>
+                  <span class="text-[12px] font-semibold text-white flex items-center gap-1.5 font-sans">
+                    <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse shadow-[0_0_5px_rgba(74,222,128,0.8)]"></span>
+                    Reviewing Screen...
+                  </span>
+                </div>
+              </div>
+              
+            </div>
+          </div>
+        </div>
+      </div>
+      </div>
+    </section>
+
+
+
+    <!-- Scroll Hint -->
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 48px 0; animation: scrollHint 2.5s ease-in-out infinite;">
+      <p style="font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3em; color: var(--text-muted); margin-bottom: 0;">Scroll to explore</p>
+      <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color: var(--text-muted);"><polyline points="6 9 12 15 18 9"/></svg>
+    </div>
+
+    <!-- ── Feature: WearOS ── -->
+    <section class="py-24 max-w-6xl mx-auto grid gap-16 lg:grid-cols-2 items-center animate-on-scroll" style="display: grid; gap: 64px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); padding: 96px 0; align-items: center; z-index: 10; position: relative;">
+      <div class="flex justify-center pq-watch-stage" style="perspective: 1200px; display: flex; justify-content: center; align-items: center; min-height: 350px;">
+        <!-- Sleek Circular Watch Mockup (Pixel/Galaxy Watch Style) -->
+        <div class="relative w-[220px] h-[220px] rounded-full bg-gradient-to-br from-zinc-700 via-zinc-900 to-zinc-800 p-[3px] shadow-[0_25px_50px_-12px_rgba(0,0,0,0.8)] group suraksha-watch-mock suraksha-parallax pq-watch" style="transform-style: preserve-3d; position: relative;">
+          
+          <!-- Top Strap -->
+          <div class="absolute -top-10 left-1/2 -translate-x-1/2 w-[90px] h-12 bg-gradient-to-b from-zinc-800 to-[#111] rounded-t-xl shadow-[inset_0_2px_4px_rgba(255,255,255,0.05)] z-[-2]">
+            <div class="w-full h-full opacity-30 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiLz48L3N2Zz4=')]"></div>
+          </div>
+          
+          <!-- Bottom Strap -->
+          <div class="absolute -bottom-10 left-1/2 -translate-x-1/2 w-[90px] h-12 bg-gradient-to-t from-zinc-800 to-[#111] rounded-b-xl shadow-[inset_0_-2px_4px_rgba(255,255,255,0.05)] z-[-2]">
+            <div class="w-full h-full opacity-30 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9InJnYmEoMjU1LDI1NSwyNTUsMC4wMykiLz48L3N2Zz4=')]"></div>
+          </div>
+
+          <!-- Side Button (Hardware) -->
+          <div class="absolute -right-[2px] top-1/2 -translate-y-1/2 h-10 w-[4px] rounded-r-md bg-gradient-to-b from-zinc-500 via-zinc-300 to-zinc-600 shadow-[2px_0_5px_rgba(0,0,0,0.5)] z-[-1]"></div>
+          
+          <!-- Screen inner wrapper -->
+          <div class="relative h-full w-full overflow-hidden rounded-full border-[6px] border-black bg-black flex flex-col p-0 text-white items-center justify-center text-center pq-watch-screen" style="transform: translateZ(20px); height: 100%; border-radius: 50%;">
+            <div class="absolute inset-0 bg-gradient-to-br from-[#111111]/15 via-black to-blue-900/15 pointer-events-none"></div>
+            
+            <div class="flex flex-col items-center z-10 w-full px-2">
+              <span class="text-[11px] font-bold text-gray-400 mb-2">11:42</span>
+              
+              <div class="w-8 h-8 rounded-full bg-[#111111]/20 border border-[#111111]/50 flex items-center justify-center mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-[#111111]"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z"/></svg>
+              </div>
+              <h4 class="text-[13px] font-bold tracking-tight text-white mb-0.5">Quest Alert</h4>
+              <p class="text-[10px] text-gray-400 font-medium leading-tight mb-3">2 of 3 complete</p>
+              
+              <!-- Watch Action Button -->
+              <button class="px-5 py-1.5 bg-gradient-to-r from-[#111111] to-blue-600 rounded-full text-[11px] font-bold shadow-[0_0_15px_rgba(17,17,17,0.4)] flex items-center justify-center hover:brightness-110 transition-all">Review</button>
+            </div>
+            
+            <div class="pq-watch-ui">
+              <div class="pq-watch-topline"><span>11:42</span><span class="pq-watch-live"><i></i> SYNCED</span></div>
+              <div class="pq-watch-progress"><svg viewBox="0 0 84 84" aria-hidden="true"><circle cx="42" cy="42" r="34"/><circle class="pq-watch-progress-value" cx="42" cy="42" r="34"/></svg><strong>67<small>%</small></strong></div>
+              <div class="pq-watch-quest"><span>ACTIVE QUEST</span><b>React hooks</b><p>Dependency arrays</p></div>
+              <button class="pq-watch-action" type="button"><span>Continue</span><span>→</span></button>
+            </div>
+
+            <!-- Static Glass Reflection -->
+            <div class="pointer-events-none absolute -inset-[100%] z-40 bg-gradient-to-tr from-transparent via-white/10 to-transparent rotate-[30deg] translate-y-[-20%] group-hover:translate-y-[10%] transition-transform duration-1000 ease-out"></div>
+          </div>
+        </div>
+      </div>
+      <div class="space-y-6 text-left pq-watch-text">
+        <p class="text-xs font-bold uppercase tracking-[0.24em] text-[var(--accent)]" style="color: var(--accent); font-weight: 700; letter-spacing: 0.24em; font-size: 12px; text-transform: uppercase;">WearOS Companion</p>
+        <h2 class="font-display text-4xl lg:text-5xl font-black leading-[1.05] tracking-tighter" style="font-family: var(--font-heading); font-weight: 800; font-size: 2.8rem; line-height: 1.05;">
+          <span style="background: linear-gradient(135deg, #0055FF 0%, #7342E2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block;">Stay in the loop.</span><br/>
+          <span style="color: var(--text);">Your progress never stops.</span>
+        </h2>
+        <p class="text-lg leading-relaxed text-[var(--text-muted)]" style="color: var(--text-muted);">
+          Get instant notifications, review code changes, and track your daily coding streaks directly from your wrist. Keep context flowing between your IDE and your smartwatch.
+        </p>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 16px;">
+          <span style="background: white; border: 1px solid var(--line); padding: 8px 16px; border-radius: 999px; font-size: 12px; font-weight: 700; color: var(--text-muted); box-shadow: var(--shadow-sm);">
+            Smartwatch Sync
+          </span>
+          <span style="background: white; border: 1px solid var(--line); padding: 8px 16px; border-radius: 999px; font-size: 12px; font-weight: 700; color: var(--text-muted); box-shadow: var(--shadow-sm);">
+            Haptic Alerts
+          </span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── How it works Stacking Cards Section ── -->
+    <div id="workflow" class="relative mt-24 lg:mt-32" style="height: 300vh; position: relative;">
+      <div style="position: sticky; top: 0; height: 100vh; display: flex; align-items: center; overflow: hidden; width: 100%;">
+        <div class="grid w-full lg:grid-cols-2 gap-12 lg:gap-24 items-center" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); width: 100%; gap: 64px;">
+          
+          <!-- Left Side: Sticky Title -->
+          <div class="space-y-6 text-left">
+            <p class="text-xs font-bold uppercase tracking-[0.24em] text-[var(--accent)]" style="color: var(--accent); font-weight: 700; letter-spacing: 0.24em; font-size: 12px; text-transform: uppercase; margin-bottom: 8px;">Workflow Roadmap</p>
+            <h2 class="font-display text-5xl lg:text-7xl leading-[1.1] tracking-tight" style="font-family: var(--font-heading); font-weight: 800; font-size: 4rem; line-height: 1.1; margin-bottom: 16px;">
+              <span style="background: linear-gradient(135deg, #FF453A 0%, #FF9F0A 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block;">Master Open Source</span> <br/>
+              <span style="color: var(--text);">Step by Step.</span>
+            </h2>
+            <p class="text-lg text-[var(--text-muted)] max-w-md" style="color: var(--text-muted); font-size: 1.1rem; line-height: 1.6;">
+              Follow this structured pipeline to parse any issue, master prerequisite skills via AI-guided quests, and submit review-ready pull requests.
+            </p>
+          </div>
+
+          <!-- Right Side: Stacked Cards -->
+          <div class="relative w-full max-w-md" style="height: 400px; position: relative; perspective: 1200px;">
+            
+            <!-- Card 1 -->
+            <div class="workflow-stack-card absolute left-0 right-0 top-0 w-full" data-index="0" style="position: absolute; width: 100%; transform-origin: top center; z-index: 10; transition: transform 0.1s ease, opacity 0.1s ease;">
+              <div style="overflow: hidden; border-radius: 32px; border: 1px solid rgba(255,255,255,0.1); background: #161618; padding: 32px; height: 260px; box-shadow: 0 30px 60px -15px rgba(0,0,0,0.5); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); position: relative; color: white;">
+                <div style="display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+                  <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div style="width: 48px; height: 48px; border-radius: 16px; background: #FF3333; color: white; display: grid; place-items: center; font-size: 1.25rem; font-weight: 900;">1</div>
+                    <div style="font-family: var(--font-heading); font-size: 3rem; font-weight: 900; color: rgba(255,255,255,0.1);">01</div>
+                  </div>
+                  <div>
+                    <h3 style="font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700; color: white; margin-bottom: 8px;">Paste a GitHub Issue</h3>
+                    <p style="font-size: 0.95rem; line-height: 1.5; color: rgba(255,255,255,0.6);">Found an issue you want to solve? Paste the link, and PatchQuest will analyze the description, requirements, and codebase context.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 2 -->
+            <div class="workflow-stack-card absolute left-0 right-0 top-0 w-full" data-index="1" style="position: absolute; width: 100%; transform-origin: top center; z-index: 11; transition: transform 0.1s ease, opacity 0.1s ease;">
+              <div style="overflow: hidden; border-radius: 32px; border: 1px solid rgba(255,255,255,0.1); background: #161618; padding: 32px; height: 260px; box-shadow: 0 30px 60px -15px rgba(0,0,0,0.5); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); position: relative; color: white;">
+                <div style="display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+                  <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div style="width: 48px; height: 48px; border-radius: 16px; background: #FF6600; color: white; display: grid; place-items: center; font-size: 1.25rem; font-weight: 900;">2</div>
+                    <div style="font-family: var(--font-heading); font-size: 3rem; font-weight: 900; color: rgba(255,255,255,0.1);">02</div>
+                  </div>
+                  <div>
+                    <h3 style="font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700; color: white; margin-bottom: 8px;">Discover Skill Gaps</h3>
+                    <p style="font-size: 0.95rem; line-height: 1.5; color: rgba(255,255,255,0.6);">The AI extracts required knowledge areas, detects gaps, generates learning roadmaps, and presents structured learning objectives.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 3 -->
+            <div class="workflow-stack-card absolute left-0 right-0 top-0 w-full" data-index="2" style="position: absolute; width: 100%; transform-origin: top center; z-index: 12; transition: transform 0.1s ease, opacity 0.1s ease;">
+              <div style="overflow: hidden; border-radius: 32px; border: 1px solid rgba(255,255,255,0.1); background: #161618; padding: 32px; height: 260px; box-shadow: 0 30px 60px -15px rgba(0,0,0,0.5); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); position: relative; color: white;">
+                <div style="display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+                  <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div style="width: 48px; height: 48px; border-radius: 16px; background: #7342E2; color: white; display: grid; place-items: center; font-size: 1.25rem; font-weight: 900;">3</div>
+                    <div style="font-family: var(--font-heading); font-size: 3rem; font-weight: 900; color: rgba(255,255,255,0.1);">03</div>
+                  </div>
+                  <div>
+                    <h3 style="font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700; color: white; margin-bottom: 8px;">Complete Quests</h3>
+                    <p style="font-size: 0.95rem; line-height: 1.5; color: rgba(255,255,255,0.6);">Complete tasks with Gemini Live voice tutorials, interactive quizzes, and smartwatch progress syncing.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Card 4 -->
+            <div class="workflow-stack-card absolute left-0 right-0 top-0 w-full" data-index="3" style="position: absolute; width: 100%; transform-origin: top center; z-index: 13; transition: transform 0.1s ease, opacity 0.1s ease;">
+              <div style="overflow: hidden; border-radius: 32px; border: 1px solid rgba(255,255,255,0.1); background: #161618; padding: 32px; height: 260px; box-shadow: 0 30px 60px -15px rgba(0,0,0,0.5); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); position: relative; color: white;">
+                <div style="display: flex; flex-direction: column; justify-content: space-between; height: 100%;">
+                  <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div style="width: 48px; height: 48px; border-radius: 16px; background: #00E559; color: white; display: grid; place-items: center; font-size: 1.25rem; font-weight: 900;">4</div>
+                    <div style="font-family: var(--font-heading); font-size: 3rem; font-weight: 900; color: rgba(255,255,255,0.1);">04</div>
+                  </div>
+                  <div>
+                    <h3 style="font-family: var(--font-heading); font-size: 1.5rem; font-weight: 700; color: white; margin-bottom: 8px;">Validate PR & Submit</h3>
+                    <p style="font-size: 0.95rem; line-height: 1.5; color: rgba(255,255,255,0.6);">Compare changes against the original issue context, generate readiness reports, and submit with complete confidence.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── System Core Modules (SpotlightCard pattern) ── -->
+    <section id="features" class="py-24 animate-on-scroll" style="padding: 96px 0; z-index: 10; position: relative;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 48px;">
+        <h2 style="font-family: var(--font-heading); font-size: 2.5rem; font-weight: 800; color: var(--text); tracking-tight: -0.04em;">System Core Modules</h2>
+        <span style="height: 1px; flex: 1; margin-left: 32px; background: var(--line);"></span>
+      </div>
+
+      <div class="grid gap-6 md:grid-cols-2" style="display: grid; gap: 24px; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));">
+        <!-- Map Radar Module / Skill Analyzer -->
+        <div class="card spotlight-card pq-module-card pq-module-analyzer" data-spotlight="rgba(0, 229, 89, 0.15)" style="padding: 32px; display: flex; flex-direction: column; justify-content: space-between; border-radius: 32px; border: 1px solid var(--line); background: white; shadow: var(--shadow-sm); height: 100%; min-height: 440px;">
+          <div class="pq-module-copy" style="margin-bottom: 24px; text-align: left;">
+            <div class="pq-module-meta"><span class="pq-module-state"><i></i> ANALYZING</span><span>01 / CORE</span></div>
+            <span style="width: 48px; height: 48px; display: grid; place-items: center; border-radius: 16px; background: rgba(0, 229, 89, 0.1); color: #00E559; margin-bottom: 24px; border: 1px solid rgba(0, 229, 89, 0.2);">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            </span>
+            <h3 style="font-family: var(--font-heading); font-size: 1.875rem; font-weight: 700; color: var(--text); tracking-tight: -0.04em;">AI Skill Analyzer</h3>
+            <p style="margin-top: 8px; color: var(--text-muted); line-height: 1.6;">Extracts critical prerequisite skills from any GitHub issue description automatically, prioritizing knowledge paths based on codebase dependency layers.</p>
+          </div>
+          <!-- Premium visual representation (Skill Node Map) -->
+          <div class="pq-analysis-surface" style="background: #fafafa; border: 1px solid var(--line); border-radius: 20px; padding: 24px; position: relative; overflow: hidden; height: 180px; display: flex; align-items: center; justify-content: center;">
+            <div class="pq-surface-topbar"><span>issue #142</span><span>3 skills found</span></div>
+            <div style="position: absolute; inset: 0; background-image: radial-gradient(rgba(0,0,0,0.03) 1px, transparent 1px); background-size: 16px 16px; opacity: 0.8;"></div>
+            
+            <svg style="position: absolute; inset: 0; width: 100%; height: 100%;" xmlns="http://www.w3.org/2000/svg">
+              <path d="M 90,90 Q 180,45 270,90" fill="none" stroke="url(#nodeGradient)" stroke-width="2.5" stroke-dasharray="6,4" style="animation: flowDash 20s linear infinite;"></path>
+              <defs>
+                <linearGradient id="nodeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#00E559" />
+                  <stop offset="100%" stop-color="#7342E2" />
+                </linearGradient>
+              </defs>
+            </svg>
+
+            <!-- Skill Node 1 -->
+            <div style="position: absolute; left: 30px; top: 60px; display: flex; align-items: center; gap: 8px; background: white; border: 1px solid rgba(0, 229, 89, 0.3); padding: 8px 12px; border-radius: 12px; box-shadow: var(--shadow-sm); z-index: 10; animation: floatingNode 4s ease-in-out infinite alternate;">
+              <span style="width: 8px; height: 8px; border-radius: 50%; background: #00E559; display: inline-block; box-shadow: 0 0 8px #00E559;"></span>
+              <span style="font-size: 11px; font-weight: 700; color: var(--text);">React Hooks</span>
+            </div>
+
+            <!-- Skill Node 2 -->
+            <div style="position: absolute; right: 30px; top: 60px; display: flex; align-items: center; gap: 8px; background: white; border: 1px solid rgba(115, 66, 226, 0.3); padding: 8px 12px; border-radius: 12px; box-shadow: var(--shadow-sm); z-index: 10; animation: floatingNode 4s ease-in-out infinite alternate; animation-delay: -2s;">
+              <span style="width: 8px; height: 8px; border-radius: 50%; background: #7342E2; display: inline-block; box-shadow: 0 0 8px #7342E2;"></span>
+              <span style="font-size: 11px; font-weight: 700; color: var(--text);">useEffect Lifecycle</span>
+            </div>
+            
+            <div style="position: absolute; bottom: 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px;">Dependency Analysis Graph</div>
+          </div>
+        </div>
+
+        <!-- CareLearn / Multimodal Tutor -->
+        <div class="card spotlight-card pq-module-card pq-module-tutor" data-spotlight="rgba(0, 85, 255, 0.15)" style="padding: 32px; display: flex; flex-direction: column; justify-content: space-between; border-radius: 32px; border: 1px solid var(--line); background: white; shadow: var(--shadow-sm); height: 100%; min-height: 440px;">
+          <div class="pq-module-copy" style="margin-bottom: 24px; text-align: left;">
+            <div class="pq-module-meta"><span class="pq-module-state pq-module-state--blue"><i></i> LIVE SESSION</span><span>02 / GUIDE</span></div>
+            <span style="width: 48px; height: 48px; display: grid; place-items: center; border-radius: 16px; background: rgba(0, 85, 255, 0.1); color: #0055FF; margin-bottom: 24px; border: 1px solid rgba(0, 85, 255, 0.2);">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5V15a2 2 0 0 1 2-2h14M4 19.5A2.5 2.5 0 0 1 6.5 17H20M4 19.5A2.5 2.5 0 0 0 6.5 22H20M16 2v8l-3-3-3 3V2"/></svg>
+            </span>
+            <h3 style="font-family: var(--font-heading); font-size: 1.875rem; font-weight: 700; color: var(--text); tracking-tight: -0.04em;">Multimodal AI Tutor</h3>
+            <p style="margin-top: 8px; color: var(--text-muted); line-height: 1.6;">Interact using real-time voice, speech, and screen-sharing powered by <strong>Google AI (Gemini Live API)</strong> & <strong>ElevenLabs API</strong> to debug issues and master code concepts interactively.</p>
+          </div>
+          <!-- Premium visual representation (Live Transcript & Siri Wave) -->
+          <div class="pq-tutor-surface" style="background: #161618; border: 1px solid rgba(255,255,255,0.05); border-radius: 20px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; height: 180px; position: relative; overflow: hidden; color: white;">
+            <div class="pq-surface-topbar"><span>gemini live</span><span class="pq-live-listening"><i></i> listening</span></div>
+            <!-- Subtle waveform line overlay -->
+            <div style="display: flex; gap: 4px; align-items: center; justify-content: center; height: 32px; margin-bottom: 12px; width: 100%;">
+              <div class="voice-bar-mock" style="height: 12px; width: 3px; border-radius: 2px; background: #0055FF; animation: miniWave 0.6s ease-in-out infinite alternate; animation-delay: 0.1s;"></div>
+              <div class="voice-bar-mock" style="height: 24px; width: 3px; border-radius: 2px; background: #7342E2; animation: miniWave 0.6s ease-in-out infinite alternate; animation-delay: 0.2s;"></div>
+              <div class="voice-bar-mock" style="height: 8px; width: 3px; border-radius: 2px; background: #a78bfa; animation: miniWave 0.6s ease-in-out infinite alternate; animation-delay: 0.3s;"></div>
+              <div class="voice-bar-mock" style="height: 20px; width: 3px; border-radius: 2px; background: #00E559; animation: miniWave 0.6s ease-in-out infinite alternate; animation-delay: 0.4s;"></div>
+              <div class="voice-bar-mock" style="height: 14px; width: 3px; border-radius: 2px; background: #0055FF; animation: miniWave 0.6s ease-in-out infinite alternate; animation-delay: 0.5s;"></div>
+            </div>
+
+            <!-- Sleek code reply -->
+            <div style="background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 12px; text-align: left; display: flex; flex-direction: column; gap: 4px;">
+              <div style="font-size: 11px; font-weight: 700; color: rgba(255, 255, 255, 0.4); text-transform: uppercase; letter-spacing: 0.5px;">Live Speech Synthesis</div>
+              <p style="font-size: 11.5px; color: rgba(255, 255, 255, 0.85); font-family: var(--font-sans); line-height: 1.4; margin: 0;">"To mock useEffect lifecycle, return a cleanup spy..."</p>
+              <pre style="font-family: var(--mono); font-size: 10px; color: #a78bfa; margin: 4px 0 0; background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 4px; overflow-x: auto; border: none; box-shadow: none;">jest.spyOn(React, 'useEffect');</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ── Bottom CTA ── -->
+    <section id="start" class="lp-bottom-cta py-24 animate-on-scroll" style="text-align: center; padding: 96px 0; z-index: 10; position: relative;">
+      <h2 style="font-family: var(--font-heading); font-size: 3.5rem; font-weight: 900; tracking-tight: -0.04em; margin-bottom: 24px; line-height: 1.15;">
+        <span style="background: linear-gradient(135deg, #7342E2 0%, #FF453A 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; display: inline-block;">Level Up From Every Bug.</span>
+      </h2>
+      <button type="button" class="lp-cta shadow-[0_4px_14px_rgba(0,0,0,0.15)]" id="btn-launch-app-bottom">Start Your First Quest</button>
+    </section>
+
+    <hr style="border: 0; border-top: 1px solid var(--line); margin: 48px 0;" />
+
+    <!-- Footer -->
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 16px; font-size: 14px; font-weight: 600; color: var(--text-muted); padding-bottom: 32px; z-index: 10; position: relative;">
+      <p>© PatchQuest Learning Platform. All rights reserved.</p>
+      <a href="#" class="btn-toggle-spec" style="color: var(--accent); text-decoration: none; display: flex; align-items: center; gap: 4px;">
+        Technical Specifications & Workflow Agents →
+      </a>
+    </div>
+
+  </div>
+
+  <div class="app hidden" id="app-workspace">
+    <header>
+      <div class="brand">
+        <div class="logo">PQ</div>
+        <div>
+          <h1>PatchQuest</h1>
+          <p class="tagline">Level up from every bug</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button type="button" class="btn-settings" id="btn-history" title="History">🕒 Quest History</button>
+
+      </div>
+    </header>
+
+
+    <!-- ── Dashboard Grid Layout (Nudge Aesthetic) ── -->
+    <div class="dashboard-grid">
+      <!-- Main Step-by-Step Flow Column -->
+      <main class="dashboard-main">
+        <!-- Step 1: Paste issue -->
+        <section class="card" id="step-fetch">
+          <h2><span class="step-num active" id="step1-num">1</span> Paste a GitHub Issue</h2>
+          <label for="issue-url">Public issue URL</label>
+          <div class="input-row">
+            <input type="url" id="issue-url" placeholder="https://github.com/facebook/react/issues/12345" />
+            <button type="button" class="primary" id="btn-fetch">Fetch Issue</button>
+          </div>
+          <div class="demo-actions" style="margin-top: 12px; display: flex; align-items: center;">
+            <span class="muted-inline">Or try an example:</span>
+            <button type="button" class="ghost" id="btn-demo-issue" style="text-decoration: underline; padding-left: 6px; font-weight: 600; cursor: pointer;">task-express feature #1</button>
+          </div>
+          <div class="loading-overlay" id="fetch-loading">
+            <span class="spinner"></span>
+            <span id="fetch-loading-text">Fetching issue from GitHub…</span>
+          </div>
+          <div class="issue-preview" id="issue-preview">
+            <h3 id="issue-title"></h3>
+            <div class="meta" id="issue-meta"></div>
+            <div class="body" id="issue-body"></div>
+          </div>
+        </section>
+
+        <!-- Step 2: Skill plan -->
+        <section class="card section-locked hidden" id="step-skills">
+          <h2><span class="step-num" id="step2-num">2</span> Learning Quest Plan <span class="muted-inline">— human review</span></h2>
+          <p class="hint">AI extracts 2–4 skills with learning resources. Edit names and URLs, then approve your quest plan.</p>
+          <button type="button" class="primary" id="btn-analyze" disabled>Analyze Skills with AI</button>
+          <div class="loading-overlay" id="analyze-loading">
+            <span class="spinner"></span>
+            <span id="analyze-loading-text">Identifying skill gaps and learning resources…</span>
+          </div>
+          <ul class="skills-list hidden" id="skills-list"></ul>
+          <div class="toolbar hidden" id="skills-toolbar">
+            <button type="button" id="btn-add-skill">+ Add Skill</button>
+            <button type="button" class="success" id="btn-approve" disabled>Approve Plan</button>
+          </div>
+        </section>
+
+        <!-- Step 3: Complete quest -->
+        <section class="card section-locked hidden" id="step-quest">
+          <h2><span class="step-num" id="step3-num">3</span> Complete Your Quest</h2>
+          <div class="progress-wrap">
+            <div class="progress-label">
+              <span>Quest progress</span>
+              <span id="progress-text">0 / 0 skills</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="progress-fill"></div>
+            </div>
+          </div>
+          <ul class="skills-list" id="quest-list"></ul>
+          <button type="button" class="primary" id="btn-outline" disabled>Generate Solution Outline</button>
+          <div class="loading-overlay" id="outline-loading">
+            <span class="spinner"></span>
+            <span id="outline-loading-text">Generating solution outline from issue + completed skills…</span>
+          </div>
+        </section>
+
+        <!-- Step 4: Review outline -->
+        <section class="card section-locked hidden" id="step-outline">
+          <h2><span class="step-num" id="step4-num">4</span> Solution Outline <span class="muted-inline">— human review</span></h2>
+          <p class="hint">Review the AI-generated solution outline. Approve it to generate your PR checklist.</p>
+          <div class="outline-box" id="outline-box"></div>
+          <div class="toolbar hidden" id="outline-toolbar">
+            <button type="button" class="primary" id="btn-copy-outline">Copy Outline</button>
+            <button type="button" class="success" id="btn-approve-outline">Approve Solution</button>
+            <button type="button" id="btn-reset-early">Start Over</button>
+          </div>
+        </section>
+
+        <!-- Step 5: PR checklist export -->
+        <section class="card section-locked hidden" id="step-export">
+          <h2><span class="step-num" id="step5-num">5</span> PR Checklist <span class="muted-inline">— ready to ship</span></h2>
+          <p class="hint">Your PR-ready checklist. Copy it, paste into your pull request, and start shipping.</p>
+          <div class="pr-checklist-box markdown-body" id="pr-checklist-box"></div>
+          <div class="toolbar hidden" id="export-toolbar">
+            <button type="button" class="primary" id="btn-copy">Copy PR Checklist</button>
+            <button type="button" id="btn-reset">Start New Quest</button>
+          </div>
+        </section>
+
+        <!-- Step 6: PR Review -->
+        <section class="card section-locked hidden" id="step-review">
+          <h2><span class="step-num" id="step6-num">6</span> Learning Validation <span class="muted-inline">- verify your skills</span></h2>
+          <p class="hint">Discuss your code changes with the AI pair programmer live before submitting, or paste your PR URL to generate the report.</p>
+          <div style="margin-bottom: 20px; display: flex; justify-content: center;">
+            <button type="button" class="primary" id="btn-talk-pre-review" style="display: flex; align-items: center; gap: 8px; font-weight: 600; width: 100%; justify-content: center; background: linear-gradient(135deg, var(--accent), var(--accent-g)); color: var(--bg); border: none; box-shadow: 0 4px 12px hsla(155, 72%, 46%, 0.2);">
+              🎙️ Discuss Readiness with Pair Programmer (Live)
+            </button>
+          </div>
+          <div class="input-row">
+            <input type="url" id="pr-url" placeholder="https://github.com/owner/repo/pull/123" />
+            <button type="button" class="primary" id="btn-review">Analyze PR</button>
+          </div>
+          <div class="demo-actions" style="margin-top: 12px; display: flex; align-items: center;">
+            <span class="muted-inline">Or try an example:</span>
+            <button type="button" class="ghost" id="btn-demo-pr" style="text-decoration: underline; padding-left: 6px; font-weight: 600; cursor: pointer;">task-express PR #2</button>
+          </div>
+          <div class="loading-overlay" id="review-loading">
+            <span class="spinner"></span>
+            <span id="review-loading-text">Fetching diffs and grading readiness…</span>
+          </div>
+          <div id="pr-review-results" class="markdown-body hidden" style="margin-top: 20px;"></div>
+          <div class="toolbar hidden" id="review-toolbar">
+            <button type="button" class="primary" id="btn-talk-pr" style="display: none; align-items: center; gap: 8px;"><span class="mic-icon">🎙️</span> Discuss Report Live</button>
+            <button type="button" id="btn-reset-review">Start New Quest</button>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- ── Settings dialog ────────────────────────────────────────────── -->
+
+  <!-- ── History dialog ────────────────────────────────────────────── -->
+  <dialog class="settings-dialog" id="history-dialog">
+    <div class="dialog-header">
+      <h2>🕒 Quest History</h2>
+      <button type="button" class="btn-close-dialog" id="btn-close-history">✕</button>
+    </div>
+    <div class="dialog-body" id="history-list">
+      <div class="loading-overlay active">
+        <span class="spinner"></span>
+        <span>Loading history…</span>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- ── Voice session overlay ──────────────────────────────────────── -->
+  <div class="voice-overlay" id="voice-overlay">
+    <div class="voice-card" style="position: relative;">
+      <div class="voice-skill-name" id="voice-skill-name">Skill Name</div>
+      <button type="button" class="btn-close-dialog" id="btn-close-voice" style="position: absolute; top: 16px; right: 16px; font-size: 1.2rem; color: #8b949e; background: transparent; border: none; cursor: pointer;">✕</button>
+      <div class="voice-status" id="voice-status">Connecting…</div>
+      
+      <div class="voice-screen-container hidden" id="voice-screen-container">
+        <video id="voice-screen-preview" autoplay playsinline muted></video>
+      </div>
+
+      <div class="voice-waveform" id="voice-waveform">
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+        <div class="bar"></div><div class="bar"></div><div class="bar"></div>
+      </div>
+      <div class="voice-controls">
+        <button type="button" class="btn-mic recording" id="btn-mic" title="Toggle microphone">🎙️</button>
+        <button type="button" class="btn-screenshare" id="btn-screenshare" title="Share Screen">🖥️ Share Screen</button>
+      </div>
+      <div style="margin-top: 20px;">
+        <button type="button" class="btn-end-session" id="btn-end-voice">End Session</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script src="app.js?v=21" type="module"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const mockups = document.querySelectorAll('.suraksha-parallax');
+      
+      mockups.forEach(mockup => {
+        const initialTransform = getComputedStyle(mockup).transform;
+        
+        mockup.addEventListener('mousemove', (e) => {
+          const rect = mockup.getBoundingClientRect();
+          const x = e.clientX - rect.left - rect.width / 2;
+          const y = e.clientY - rect.top - rect.height / 2;
+          
+          const tiltX = -(y / (rect.height / 2)) * 10;
+          const tiltY = (x / (rect.width / 2)) * 10;
+          
+          mockup.style.setProperty('--tilt-x', `${tiltX}deg`);
+          mockup.style.setProperty('--tilt-y', `${tiltY}deg`);
+        });
+        
+        mockup.addEventListener('mouseleave', () => {
+          mockup.style.removeProperty('--tilt-x');
+          mockup.style.removeProperty('--tilt-y');
+        });
+      });
+
+      // --- Live API Playback Logic ---
+      const standbyView = document.getElementById('standby-view');
+      const activeView = document.getElementById('active-view');
+      const btnEndCall = document.getElementById('btn-end-call');
+      const chatTranscript = document.getElementById('chat-transcript');
+      const statusText = document.getElementById('live-status-text');
+      
+      const scriptPlay = [
+        { speaker: "dev", text: "My useEffect is firing infinitely.", delay: 500 },
+        { speaker: "gemini", text: "Ah! You're missing a dependency array. Try adding [] at the end.", delay: 2500 },
+        { speaker: "dev", text: "Done. That fixed it!", delay: 5000 },
+        { speaker: "gemini", text: "Great. Now let's handle the cleanup function to prevent memory leaks.", delay: 7500 },
+      ];
+      
+      let timeouts = [];
+      
+      const startPlayback = () => {
+        standbyView.classList.add('hidden');
+        activeView.classList.remove('hidden');
+        setTimeout(() => activeView.classList.remove('opacity-0', 'pointer-events-none'), 50);
+        statusText.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-blue-400 animate-pulse"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg> Active';
+        
+        chatTranscript.innerHTML = '';
+        
+        scriptPlay.forEach((line) => {
+          const t = setTimeout(() => {
+            const msgDiv = document.createElement('div');
+            msgDiv.className = line.speaker === "dev" 
+              ? "max-w-[88%] rounded-[20px] p-3.5 text-[13.5px] font-medium leading-relaxed tracking-tight bg-zinc-800/90 text-white self-end rounded-br-[4px] shadow-sm backdrop-blur-md border border-white/5 animate-fade-in-up"
+              : "max-w-[88%] rounded-[20px] p-3.5 text-[13.5px] font-medium leading-relaxed tracking-tight bg-gradient-to-br from-indigo-600/30 to-blue-600/20 border border-indigo-400/20 text-blue-50 self-start rounded-bl-[4px] shadow-lg backdrop-blur-xl animate-fade-in-up";
+            msgDiv.textContent = line.text;
+            chatTranscript.appendChild(msgDiv);
+          }, line.delay);
+          timeouts.push(t);
+        });
+        
+        const resetT = setTimeout(() => stopPlayback(), 12000);
+        timeouts.push(resetT);
+      };
+      
+      const stopPlayback = () => {
+        timeouts.forEach(clearTimeout);
+        timeouts = [];
+        activeView.classList.add('opacity-0', 'pointer-events-none');
+        setTimeout(() => {
+          activeView.classList.add('hidden');
+          standbyView.classList.remove('hidden');
+        }, 300);
+        statusText.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></svg> Standby';
+      };
+      
+      if(standbyView && btnEndCall) {
+        standbyView.addEventListener('click', startPlayback);
+        btnEndCall.addEventListener('click', (e) => { e.stopPropagation(); stopPlayback(); });
+      }
+      
+      // Phone glare parallax
+      const phoneMock = document.querySelector('.suraksha-phone-mock');
+      const phoneGlare = document.getElementById('phone-glare');
+      if (phoneMock && phoneGlare) {
+        phoneMock.addEventListener('mousemove', (e) => {
+          const rect = phoneMock.getBoundingClientRect();
+          const x = (e.clientX - rect.left) / rect.width;
+          const y = (e.clientY - rect.top) / rect.height;
+          phoneGlare.style.background = `radial-gradient(circle 300px at ${x * 100}% ${y * 100}%, rgba(255,255,255,0.15), transparent 60%)`;
+        });
+      }
+    });
+  </script>
+</body>
+
+</html>
